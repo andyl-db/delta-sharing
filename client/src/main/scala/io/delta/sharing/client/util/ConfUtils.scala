@@ -78,6 +78,9 @@ object ConfUtils {
   val PROXY_PORT = "spark.delta.sharing.network.proxyPort"
   val NO_PROXY_HOSTS = "spark.delta.sharing.network.noProxyHosts"
 
+  val STRUCTURAL_SCHEMA_MATCH_CONF = "spark.delta.sharing.client.useStructuralSchemaMatch"
+  val STRUCTURAL_SCHEMA_MATCH_DEFAULT = "false"
+
   def getProxyConfig(conf: Configuration): Option[ProxyConfig] = {
     val proxyHost = conf.get(PROXY_HOST, null)
     val proxyPortAsString = conf.get(PROXY_PORT, null)
@@ -215,6 +218,50 @@ object ConfUtils {
   def limitPushdownEnabled(conf: SQLConf): Boolean = {
     conf.getConfString(LIMIT_PUSHDOWN_ENABLED_CONF, LIMIT_PUSHDOWN_ENABLED_DEFAULT).toBoolean
   }
+
+  def tokenExchangeMaxRetries(conf: Configuration): Int = {
+    val numRetries = conf.getInt(OAUTH_RETRIES_CONF, OAUTH_RETRIES_DEFAULT)
+    validateNonNeg(numRetries, OAUTH_RETRIES_CONF)
+    numRetries
+  }
+
+  def tokenExchangeMaxRetries(conf: SQLConf): Int = {
+    val numRetries = conf.getConfString(
+      OAUTH_RETRIES_CONF, OAUTH_RETRIES_DEFAULT.toString).toInt
+    validateNonNeg(numRetries, NUM_RETRIES_CONF)
+    numRetries
+  }
+
+  def tokenExchangeMaxRetryDurationInSeconds(conf: Configuration): Int = {
+    val maxDur = conf.getInt(
+      OAUTH_MAX_RETRY_DURATION_CONF, OAUTH_MAX_RETRY_DURATION_SECONDS_DEFAULT)
+    validatePositive(maxDur, OAUTH_MAX_RETRY_DURATION_CONF)
+    maxDur
+  }
+
+  def tokenExchangeMaxRetryDurationInSeconds(conf: SQLConf): Int = {
+    val maxDur = conf.getConfString(
+      OAUTH_MAX_RETRY_DURATION_CONF, OAUTH_MAX_RETRY_DURATION_SECONDS_DEFAULT.toString).toInt
+    validatePositive(maxDur, OAUTH_MAX_RETRY_DURATION_CONF)
+    maxDur
+  }
+
+  def tokenRenewalThresholdInSeconds(conf: Configuration): Int = {
+    val maxDur = conf.getInt(
+      OAUTH_EXPIRATION_THRESHOLD_CONF, OAUTH_EXPIRATION_THRESHOLD_SECONDS_DEFAULT)
+    validatePositive(maxDur, OAUTH_EXPIRATION_THRESHOLD_CONF)
+    maxDur
+  }
+
+  def tokenRenewalThresholdInSeconds(conf: SQLConf): Int = {
+    val maxDur = conf.getConfString(
+      OAUTH_EXPIRATION_THRESHOLD_CONF, OAUTH_EXPIRATION_THRESHOLD_SECONDS_DEFAULT.toString).toInt
+    validatePositive(maxDur, OAUTH_EXPIRATION_THRESHOLD_CONF)
+    maxDur
+  }
+
+  def structuralSchemaMatchingEnabled(conf: SQLConf): Boolean =
+    conf.getConfString(STRUCTURAL_SCHEMA_MATCH_CONF, STRUCTURAL_SCHEMA_MATCH_DEFAULT).toBoolean
 
   private def toTimeInSeconds(timeStr: String, conf: String): Int = {
     val timeInSeconds = JavaUtils.timeStringAs(timeStr, TimeUnit.SECONDS)
